@@ -1,6 +1,6 @@
 ## Bytecode Interpreter
 
-With the motive of learning the working of bytecode interpretershowcasing different virtual machine architectures and techniques for executing bytecode instructions.
+With the motive of learning the workings of bytecode interpreter, showcasing different virtual machine architectures and techniques for executing bytecode instructions.
 
 ### Files Overview
 
