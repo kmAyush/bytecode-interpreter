@@ -12,65 +12,87 @@ struct {
 typedef enum {
     OP_INC,
     OP_DEC,
+    /* add the immediate argument to the register */
+    OP_ADDI,
+    /* subtract the immediate argument from the register */
+    OP_SUBI,
+    /* stop execution */
     OP_DONE
 } opcode;
 
-typedef enum interpret_result { 
+typedef enum interpret_result {
     SUCCESS,
     ERROR_UNKNOWN_OPCODE,
 } interpret_result;
 
-void vm_reset(void) {
-    puts("Reset VM State");
+void vm_reset(void)
+{
+    puts("Reset vm state");
     vm = (typeof(vm)) { NULL };
 }
 
-interpret_result vm_interpreter( uint8_t *bytecode){
+interpret_result vm_interpret(uint8_t *bytecode)
+{
     vm_reset();
+
     puts("Start interpreting");
     vm.ip = bytecode;
-    for(;;){
+    for (;;) {
         uint8_t instruction = *vm.ip++;
-
-        switch(instruction) {
-            case OP_INC: {
-                vm.accumulator++;
-                break;
-            }
-            case OP_DEC: {
-                vm.accumulator--;
-                break;
-            }
-            case OP_DONE: {
-                return SUCCESS;
-            }
-            default: {
-                return ERROR_UNKNOWN_OPCODE;
-            }
+        switch (instruction) {
+        case OP_INC: {
+            vm.accumulator++;
+            break;
+        }
+        case OP_DEC: {
+            vm.accumulator--;
+            break;
+        }
+        case OP_ADDI: {
+            /* get the argument */
+            uint8_t arg = *vm.ip++;
+            vm.accumulator += arg;
+            break;
+        }
+        case OP_SUBI: {
+            /* get the argument */
+            uint8_t arg = *vm.ip++;
+            vm.accumulator -= arg;
+            break;
+        }
+        case OP_DONE: {
+            return SUCCESS;
+        }
+        default:
+            return ERROR_UNKNOWN_OPCODE;
         }
     }
+
     return SUCCESS;
 }
 
-int main(int argc, char *argv[]) {
-    (void) argc;
-    (void) argv;
+int main(int argc, char *argv[])
+{
+    (void) argc; (void) argv;
+
     {
-        uint8_t code[] = { OP_INC, OP_INC, OP_DEC, OP_DONE };
-        interpret_result result = vm_interpreter(code);
+        /* notice the value after OP_ADDI */
+        uint8_t code[] = { OP_ADDI, 10, OP_DEC, OP_DONE };
+        interpret_result result = vm_interpret(code);
         printf("vm state: %" PRIu64 "\n", vm.accumulator);
 
         assert(result == SUCCESS);
-        assert(vm.accumulator == 1);
+        assert(vm.accumulator == 9);
     }
 
     {
-        uint8_t code[] = { OP_INC, OP_DEC, OP_DEC, OP_DONE };
-        interpret_result result = vm_interpreter(code);
+        /* notice values after OP_ADDI and OP_SUBI  */
+        uint8_t code[] = { OP_ADDI, 10, OP_SUBI, 3, OP_DONE };
+        interpret_result result = vm_interpret(code);
         printf("vm state: %" PRIu64 "\n", vm.accumulator);
 
         assert(result == SUCCESS);
-        assert(vm.accumulator == UINT64_MAX);
+        assert(vm.accumulator == 7);
     }
 
     return EXIT_SUCCESS;
